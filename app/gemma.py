@@ -19,11 +19,19 @@ def model_name():
     return os.environ.get("GEMMA_MODEL") or DEFAULT_MODEL
 
 
+_CLIENT = None
+
+
 def _client():
-    key = os.environ.get("GEMINI_API_KEY")
-    if not key:
-        raise RuntimeError("GEMINI_API_KEY is not set. Copy .env.example to .env and add your key.")
-    return genai.Client(api_key=key)
+    # Keep one client alive. A client that is created and dropped in the same
+    # expression gets closed before the request is sent.
+    global _CLIENT
+    if _CLIENT is None:
+        key = os.environ.get("GEMINI_API_KEY")
+        if not key:
+            raise RuntimeError("GEMINI_API_KEY is not set. Copy .env.example to .env and add your key.")
+        _CLIENT = genai.Client(api_key=key)
+    return _CLIENT
 
 
 def parse_json(text):
@@ -76,5 +84,6 @@ def extract(submission_text, slides=()):
     """slides: iterable of (bytes, mime_type) images, e.g. pitch deck pages."""
     parts = [types.Part.from_bytes(data=b, mime_type=m) for b, m in slides]
     parts.append(build_prompt(submission_text, bool(parts)))
-    resp = _client().models.generate_content(model=model_name(), contents=parts)
+    client = _client()
+    resp = client.models.generate_content(model=model_name(), contents=parts)
     return parse_json(resp.text)
