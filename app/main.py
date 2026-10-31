@@ -10,9 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 from dotenv import load_dotenv
 
-from app import gemma
+from app import anomalies, gemma
 from app.matching import ELIGIBLE, NOT_ELIGIBLE, UNCLEAR, load_programmes, match_all
-from app.readiness import AREAS, EVIDENCED, area_summary, assess, changes, gaps
+from app.readiness import AREAS, CRITERIA, EVIDENCED, area_summary, assess, changes, gaps
 
 load_dotenv()
 try:
@@ -36,7 +36,11 @@ st.title("🌏 ASEAN Opportunity Gateway")
 st.caption("Submit an idea → check readiness against fixed criteria → find ASEAN programmes "
            "you qualify for → track applications. We assess evidence; we never predict success.")
 
-submit_tab, match_tab, track_tab = st.tabs(["1. Submit & assess", "2. Programmes", "3. Tracker"])
+DISCLAIMER = ("This is a checklist of what the founder has stated. Nothing here is verified, "
+              "and it is not an approval or endorsement by any programme.")
+
+submit_tab, match_tab, track_tab, rubric_tab = st.tabs(
+    ["1. Submit & assess", "2. Programmes", "3. Tracker", "Rubric"])
 
 with submit_tab:
     ss.setdefault("idea_text", "")
@@ -55,7 +59,8 @@ with submit_tab:
                 st.error(f"Extraction failed: {e}")
                 st.stop()
         results = assess(data.get("evidence", {}), text)
-        ss.history.append({"text": text, "data": data, "results": results,
+        flags = anomalies.detect(text, data.get("anomalies", []))
+        ss.history.append({"text": text, "data": data, "results": results, "anomalies": flags,
                            "when": date.today().isoformat()})
 
     if ss.history:
@@ -68,6 +73,14 @@ with submit_tab:
                 st.info("**Since your last version:** "
                         + "; ".join([f"now evidenced: {g['question']}" for g in gained]
                                     + [f"no longer evidenced: {l['question']}" for l in lost]))
+
+        flags = run.get("anomalies", [])
+        if flags:
+            st.warning("**⚠️ Anomalies: instruction-like text found in the submission.** "
+                       "It was not obeyed and did not change any result.\n\n"
+                       + "\n".join(f"- “{f['text']}” _(flagged by {f['flagged_by']})_" for f in flags))
+        else:
+            st.caption("Anomalies: none found.")
 
         st.subheader("What Gemma extracted")
         s = data.get("summary", {})
@@ -87,8 +100,10 @@ with submit_tab:
                 for r in [r for r in results if r["area"] == area]:
                     icon = "✅" if r["status"] == EVIDENCED else "⚠️"
                     line = f"{icon} **{r['question']}** — {r['status']}"
+                    if r["reason"]:
+                        line += f": {r['reason']}"
                     if r["quote"]:
-                        line += f"\n\n> “{r['quote']}” _({r['source']})_"
+                        line += f"\n\n> “{r['quote']}” _({r['source_label']})_"
                     st.markdown(line)
 
         g = gaps(results)
@@ -107,6 +122,7 @@ with submit_tab:
             for x in data.get("assumptions", []):
                 st.markdown(f"- {x}")
 
+        st.info(DISCLAIMER)
         st.caption("To improve: edit your description with new evidence and assess again. "
                    "Changes since the last version are shown at the top.")
 
@@ -169,3 +185,16 @@ with track_tab:
     if ss.tracker:
         st.download_button("Export tracker (JSON)", json.dumps(ss.tracker, indent=2),
                            "tracker.json", "application/json")
+
+with rubric_tab:
+    st.markdown("### How ideas are checked")
+    st.markdown("Gemma only **highlights** a quote for each question. Fixed rules give the mark:\n"
+                "1. No quote → **Missing**\n"
+                "2. Quote not word-for-word in the founder's text → **Quote not found in text**\n"
+                "3. Quote fails the hard rule → **Fails rule**, with the reason\n"
+                "4. Otherwise → **Evidence stated** (what the founder says, not verified)\n\n"
+                "Asking again never changes a mark. Only new evidence in the text does. "
+                "Instruction-like text in a submission is flagged as an anomaly and never obeyed.")
+    st.table([{"Area": c["area"], "Question": c["question"], "Counts": c["counts"],
+               "Doesn't count": c["not_counts"], "Hard rule": c.get("rule", "—")} for c in CRITERIA])
+    st.caption(DISCLAIMER)
