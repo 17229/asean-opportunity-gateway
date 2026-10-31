@@ -1,0 +1,9 @@
+KedaiLink helps small grocery shops in Kuala Lumpur reorder stock. Shop owners lose sales because they only notice empty shelves after customers ask. Our customers are independent sundry shops (kedai runcit) with 1 to 3 staff.
+
+The solution is a WhatsApp bot: the owner sends a photo of the shelf, and we create a reorder list and send it to their usual wholesaler.
+
+We interviewed 25 shop owners in Cheras and 18 said they would try it. We have a working prototype that 4 shops used for two weeks.
+
+We are a team of 3: one ex-wholesaler sales rep and two software engineers. We charge wholesalers RM2 per order placed through the bot. We are not registered yet.
+
+Next milestone: 20 paying shops by March 2027.

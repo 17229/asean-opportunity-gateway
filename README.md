@@ -34,41 +34,91 @@ measured instead:
 |---|---|---|
 | 1. Submit | Founder submits startup idea | Extracts problem, solution, target market |
 | 2. Evaluate | Assess idea against defined criteria | Identifies strengths, gaps and assumptions |
-| 3. Assess | Estimate startup readiness | Readiness assessment with explanations |
+| 3. Assess | Estimate startup readiness | Quotes the evidence; fixed rules decide the readiness level |
 | 4. Recommend | Suggest relevant ASEAN programmes | Matches ideas to funding and accelerators |
 | 5. Track | Monitor idea development | Tracks milestones, changes and progress |
 | 6. Improve | Founder updates idea | Reassesses readiness based on new evidence |
 
 ## Category
 
-TODO: Category A (Gemma 4 via the Gemini API) or Category B (open-source /
-open-weight AI). Pick one.
+**A: Best Use of Gemma 4.** Gemma 4 (`gemma-4-26b-a4b-it` by default) runs
+through the Gemini API. It reads the founder's text and, optionally, pitch deck
+images (multimodal).
+
+## How it works
+
+Gemma reads the language. Fixed rules make every decision.
+
+1. **Extract (Gemma):** problem, solution, target market, a startup profile
+   (country, stage, sector, registered or not, team size), and a word-for-word
+   quote for each readiness criterion.
+2. **Verify (rules):** a criterion counts as evidenced only if its quote really
+   appears in the submission, so made-up evidence is caught.
+3. **Readiness (rules):** 9 criteria across market demand, feasibility and
+   execution. Each area shows Complete, Partial or No evidence, plus a count.
+   There are no percentages.
+4. **Eligibility (rules):** each programme's published requirements are checked
+   against the profile. The result is Eligible, Not eligible (with the reason),
+   or Unclear (with the one question that would settle it).
+5. **Milestone risk:** evidence a programme asks for that the founder has not
+   shown yet.
+6. **Track and improve:** track applications and their status. Editing the idea
+   and assessing again shows what changed since the last version.
+
+Strengths and assumptions from Gemma are shown as AI observations. They are
+never scored.
 
 ## Setup
 
-TODO: fill in once the stack is chosen.
+Requires Python 3.10+ and a Gemini API key from Google AI Studio.
 
 ```bash
-cp .env.example .env   # add your API key
+pip install -r requirements.txt
+cp .env.example .env   # add GEMINI_API_KEY
 ```
 
 ## Run
 
-TODO
+```bash
+streamlit run app/main.py
+```
+
+Click **Load sample submission**, then **Assess readiness**.
+
+Tests (rules only, no API key needed):
+
+```bash
+python -m pytest -q
+```
+
+## Deploy (live demo)
+
+Streamlit Community Cloud: new app → this repo → main file `app/main.py` →
+in Advanced settings, add the secret `GEMINI_API_KEY = "..."`.
+
+## Programme data
+
+`data/programmes.json` holds **sample entries, not real programmes**. Replace
+them with real ASEAN programmes, copying requirements only from their published
+pages and recording the link in `url` and `source`.
 
 ## Repo layout
 
-- `app/`: the application
-- `data/`: sample programmes and sample startup submissions
+- `app/main.py`: Streamlit UI
+- `app/gemma.py`: Gemma 4 extraction (the only AI step)
+- `app/readiness.py`: readiness criteria and rules
+- `app/matching.py`: programme eligibility rules
+- `data/`: programme data and a sample submission
+- `tests/`: rule tests
 - `docs/`: technical notes
 
 ## Team
 
 | Member | Area |
 |---|---|
-| TODO | Submit + evaluate (AI) |
-| TODO | Programme data + matching |
-| TODO | UI + tracking |
+| TODO | Gemma prompt + extraction (`app/gemma.py`) |
+| TODO | Real programme data + matching (`data/`, `app/matching.py`) |
+| TODO | UI, tracker, deployment (`app/main.py`) |
 | TODO | Demo video, README, submission |
 
 ## Submission checklist (OrganizerHQ, 3:00 PM hard deadline)

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "sample-regional-accelerator",
+    "name": "SAMPLE: Regional Accelerator (replace with a real programme)",
+    "type": "Accelerator",
+    "countries": ["ANY_ASEAN"],
+    "stages": ["prototype", "early revenue"],
+    "sectors": ["ANY"],
+    "incorporated_required": true,
+    "min_team_size": 2,
+    "required_evidence": ["prototype", "demand_evidence", "team"],
+    "offer": "12-week programme with mentoring and an investor demo day.",
+    "deadline": null,
+    "url": null,
+    "source": "SAMPLE data, not a real programme. Replace with the published requirements and link."
+  },
+  {
+    "id": "sample-idea-grant",
+    "name": "SAMPLE: Early-Stage Idea Grant (replace with a real programme)",
+    "type": "Grant",
+    "countries": ["Malaysia"],
+    "stages": ["idea", "prototype"],
+    "sectors": ["ANY"],
+    "incorporated_required": false,
+    "min_team_size": 1,
+    "required_evidence": ["problem", "solution", "next_milestone"],
+    "offer": "Non-equity grant to build a first prototype.",
+    "deadline": null,
+    "url": null,
+    "source": "SAMPLE data, not a real programme. Replace with the published requirements and link."
+  },
+  {
+    "id": "sample-cross-border-poc",
+    "name": "SAMPLE: Cross-Border POC Programme (replace with a real programme)",
+    "type": "Pilot / proof of concept",
+    "countries": ["Malaysia", "Singapore", "Thailand", "Indonesia", "Vietnam", "Philippines"],
+    "stages": ["early revenue", "growth"],
+    "sectors": ["fintech", "logistics", "retail", "agritech"],
+    "incorporated_required": true,
+    "min_team_size": 3,
+    "required_evidence": ["prototype", "business_model", "demand_evidence", "risks"],
+    "offer": "Matches startups with corporates in another ASEAN market for a funded pilot.",
+    "deadline": null,
+    "url": null,
+    "source": "SAMPLE data, not a real programme. Replace with the published requirements and link."
+  },
+  {
+    "id": "sample-healthtech-fund",
+    "name": "SAMPLE: Healthtech Seed Fund (replace with a real programme)",
+    "type": "Funding",
+    "countries": ["ANY_ASEAN"],
+    "stages": ["early revenue", "growth"],
+    "sectors": ["healthtech"],
+    "incorporated_required": true,
+    "min_team_size": 2,
+    "required_evidence": ["demand_evidence", "business_model", "team", "risks"],
+    "offer": "Seed investment for healthtech startups.",
+    "deadline": null,
+    "url": null,
+    "source": "SAMPLE data, not a real programme. Replace with the published requirements and link."
+  }
+]
