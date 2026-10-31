@@ -190,7 +190,7 @@ with match_tab:
 
 with track_tab:
     if not ss.tracker:
-        st.info("Track programmes from the Programmes tab.")
+        st.info("Track programmes from the Programmes tab first.")
     for i, t in enumerate(ss.tracker):
         with st.container(border=True):
             c1, c2, c3 = st.columns([3, 2, 4])
