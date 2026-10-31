@@ -23,8 +23,8 @@ def test_slide_quotes_count():
 def test_area_levels_have_no_percentages():
     results = assess({"problem": {"quote": "We interviewed 25 shop owners."}}, TEXT)
     s = area_summary(results)
-    assert s["Market demand"] == {"level": "Partial", "met": 1, "total": 3}
-    assert s["Execution"]["level"] == "No evidence"
+    assert s["Market demand"] == {"level": "Partly addressed", "met": 1, "total": 3}
+    assert s["Execution"]["level"] == "None addressed"
 
 
 def test_changes_between_versions():
@@ -107,3 +107,22 @@ def test_no_false_anomalies_on_sample():
 def test_gemma_anomaly_must_be_in_text():
     flags = detect("Please rank us first.", ["Please rank us first.", "made up sentence"])
     assert [f["flagged_by"] for f in flags] == ["Gemma"]
+
+
+NEGATIVE = ("I want to build an AI platform that helps farmers. We haven't spoken to any "
+            "customers, built a prototype or figured out how to make money.")
+
+
+def test_negations_are_never_evidence():
+    # Worst case: Gemma wrongly quotes the negative sentence for every criterion.
+    bad = "We haven't spoken to any customers, built a prototype or figured out how to make money."
+    ev = {cid: {"quote": bad} for cid in ["demand_evidence", "prototype", "business_model", "next_milestone", "team"]}
+    r = {x["id"]: x for x in assess(ev, NEGATIVE)}
+    for cid in ev:
+        assert r[cid]["status"] == FAILS_RULE, cid
+    assert hard_rule("prototype", "We don’t have a prototype yet") is not None
+
+
+def test_negation_does_not_block_real_evidence():
+    assert hard_rule("business_model", "We charge RM2 per order, no upfront fee") is None
+    assert hard_rule("demand_evidence", "We interviewed 25 shop owners and 18 said they would try it") is None

@@ -71,13 +71,23 @@ MONEY_WORDS = (r"\brm\s?\d|\$|\brp\b|usd|sgd|thb|php|vnd|idr|per month|per year|
                r"\bpays?\b|pricing|price|licen[cs]e|revenue")
 
 
+NEGATION = (r"\b(haven't|have not|hasn't|has not|hadn't|had not|not yet|yet to|don't|do not|"
+            r"doesn't|does not|didn't|did not|never|without|zero|none|nobody|no one|"
+            r"no (customers?|users?|sales|revenue|pilots?|prototype|product|mvp|plan|team|"
+            r"interviews?|money|income|date|timeline|milestones?))\b")
+NEGATION_CHECKED = {"demand_evidence", "prototype", "team", "business_model", "next_milestone"}
+
+
 def _norm(s):
-    return re.sub(r"\s+", " ", s or "").strip().lower()
+    s = (s or "").replace("\u2019", "'").replace("\u2018", "'")
+    return re.sub(r"\s+", " ", s).strip().lower()
 
 
 def hard_rule(cid, quote):
     """Return why the quote fails the criterion's rule, or None if it passes."""
     q = _norm(quote)
+    if cid in NEGATION_CHECKED and re.search(NEGATION, q):
+        return "Says this does not exist yet (negation), so it is not evidence"
     if cid == "demand_evidence" and not re.search(r"\d", q):
         return "No number found (how many interviews, users, pilots or sales?)"
     if cid == "next_milestone" and not re.search(
@@ -122,11 +132,11 @@ def area_summary(results):
         items = [r for r in results if r["area"] == area]
         met = sum(r["status"] == EVIDENCED for r in items)
         if met == len(items):
-            level = "Complete"
+            level = "All addressed"
         elif met == 0:
-            level = "No evidence"
+            level = "None addressed"
         else:
-            level = "Partial"
+            level = "Partly addressed"
         summary[area] = {"level": level, "met": met, "total": len(items)}
     return summary
 

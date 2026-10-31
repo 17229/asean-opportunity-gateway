@@ -57,11 +57,14 @@ Gemma reads the language. Fixed rules make every decision.
    source: "Founder said" or "From uploaded slide".
 3. **Hard rules:** a real quote can still be weak, so some criteria have a
    rule Gemma cannot bend. Demand evidence needs a number, the next milestone
-   needs a date, the team needs a role or experience, the business model needs
+   needs a date, the team needs a role or experience, a negation ("we haven't
+   built a prototype") is never evidence, the business model needs
    a price or payer, and a prototype must exist, not be a plan. The full rubric
    is in the app's Rubric tab.
 4. **Readiness (rules):** 9 criteria across market demand, feasibility and
-   execution. Each area shows Complete, Partial or No evidence, plus a count.
+   execution. Each area shows All addressed, Partly addressed or None
+   addressed, plus a count. This measures whether the founder has addressed
+   each question, not whether the evidence is validated or the business viable.
    There are no percentages.
 5. **Eligibility (rules):** each programme's published requirements are checked
    against the profile. The result is Eligible, Not eligible (with the reason),

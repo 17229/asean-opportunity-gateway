@@ -29,7 +29,7 @@ ss.setdefault("tracker", [])   # applications the founder is tracking
 
 TRACK_STATES = ["Interested", "Preparing", "Submitted", "Interview", "Accepted", "Rejected"]
 SAMPLE = Path(__file__).resolve().parent.parent / "data" / "sample_submission.txt"
-LEVEL_ICON = {"Complete": "🟢", "Partial": "🟡", "No evidence": "🔴"}
+LEVEL_ICON = {"All addressed": "🟢", "Partly addressed": "🟡", "None addressed": "🔴"}
 VERDICT_ICON = {ELIGIBLE: "✅", UNCLEAR: "❔", NOT_ELIGIBLE: "⛔"}
 
 st.title("🌏 ASEAN Opportunity Gateway")
@@ -89,10 +89,12 @@ with submit_tab:
         c2.markdown(f"**Solution**\n\n{s.get('solution') or '_not stated_'}")
         c3.markdown(f"**Target market**\n\n{s.get('target_market') or '_not stated_'}")
 
-        st.subheader("Readiness (rules, not AI judgment)")
+        st.subheader("Evidence described (rules, not AI judgment)")
+        st.caption("Shows whether the founder has addressed each question with stated evidence. "
+                   "It does not mean the evidence is validated or that the startup is commercially viable.")
         cols = st.columns(3)
         for col, (area, v) in zip(cols, area_summary(results).items()):
-            col.metric(area, f"{LEVEL_ICON[v['level']]} {v['level']}", f"{v['met']} of {v['total']} criteria",
+            col.metric(area, f"{LEVEL_ICON[v['level']]} {v['level']}", f"{v['met']} of {v['total']} criteria described",
                        delta_color="off")
 
         for area in AREAS:
