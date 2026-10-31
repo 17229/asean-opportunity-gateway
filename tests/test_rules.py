@@ -126,3 +126,20 @@ def test_negations_are_never_evidence():
 def test_negation_does_not_block_real_evidence():
     assert hard_rule("business_model", "We charge RM2 per order, no upfront fee") is None
     assert hard_rule("demand_evidence", "We interviewed 25 shop owners and 18 said they would try it") is None
+
+
+def test_team_or_registered_company():
+    prog = {"id": "c", "name": "C", "countries": ["Malaysia"], "stages": ["idea"], "sectors": ["ANY"],
+            "min_team_size_if_unregistered": 2}
+    base = {"country": "Malaysia", "stage": "idea", "sector": "retail"}
+    assert check({**base, "incorporated": True, "team_size": 1}, prog, [])["verdict"] == ELIGIBLE
+    assert check({**base, "incorporated": False, "team_size": 3}, prog, [])["verdict"] == ELIGIBLE
+    assert check({**base, "incorporated": False, "team_size": 1}, prog, [])["verdict"] == NOT_ELIGIBLE
+    assert check({**base, "incorporated": None, "team_size": 1}, prog, [])["verdict"] == UNCLEAR
+
+
+def test_real_programme_file_loads():
+    from app.matching import load_programmes
+    progs = load_programmes()
+    assert all(p["url"] and p["source"] for p in progs)
+    assert not any("SAMPLE" in p["name"] for p in progs)

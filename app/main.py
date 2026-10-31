@@ -149,6 +149,8 @@ with match_tab:
         size = c[4].number_input("Team size (0 = unknown)", 0, 100, profile.get("team_size") or 0)
         profile["team_size"] = size or None
 
+        st.caption("Programme facts come from published pages, checked 31/10/2026. "
+                   "Requirements change: always confirm on the official page before applying.")
         for m in match_all(profile, load_programmes(), run["results"]):
             p = m["programme"]
             with st.container(border=True):
@@ -158,14 +160,19 @@ with match_tab:
                 st.markdown(p.get("offer", ""))
                 for r in m["reasons"]:
                     st.markdown(f"- {r}")
+                if p.get("not_checked"):
+                    st.markdown("**Also required, not checked by this app (confirm yourself):**\n"
+                                + "\n".join(f"- {x}" for x in p["not_checked"]))
                 if m["confirm"]:
                     st.markdown(f"**To settle this, confirm:** {m['confirm']}")
                 if m["outstanding"]:
                     st.markdown("**Milestone risk — evidence this programme asks for that you haven't shown:**")
                     for o in m["outstanding"]:
                         st.markdown(f"- {o}")
-                if p.get("deadline"):
-                    st.markdown(f"Deadline: {p['deadline']}")
+                if p.get("status"):
+                    st.markdown(f"**Application window:** {p['status']}")
+                if p.get("url"):
+                    st.markdown(f"[Official page]({p['url']})")
                 tracked = any(t["id"] == p["id"] for t in ss.tracker)
                 if m["verdict"] != NOT_ELIGIBLE and not tracked:
                     if st.button("Track this programme", key=f"track_{p['id']}"):

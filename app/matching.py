@@ -30,7 +30,9 @@ def check(profile, programme, readiness_results):
 
     countries = programme.get("countries", ["ANY_ASEAN"])
     country = profile.get("country")
-    if countries != ["ANY_ASEAN"]:
+    if countries == ["ANY"]:
+        pass
+    elif countries != ["ANY_ASEAN"]:
         if not country:
             unknown.append("Which country is the startup based in?")
         elif country not in countries:
@@ -59,6 +61,19 @@ def check(profile, programme, readiness_results):
         elif inc is False:
             fails.append("Programme requires a registered company")
 
+    min_unreg = programme.get("min_team_size_if_unregistered") or 0
+    if min_unreg:
+        inc, size = profile.get("incorporated"), profile.get("team_size")
+        if inc is True:
+            pass
+        elif inc is False and size is not None and size < min_unreg:
+            fails.append(f"Not registered and team of {size}; programme needs a registered company "
+                         f"or at least {min_unreg} people")
+        elif inc is False and size is None:
+            unknown.append("How many people are on the founding team?")
+        elif inc is None and (size is None or size < min_unreg):
+            unknown.append("Is the startup a registered company?")
+
     min_team = programme.get("min_team_size") or 0
     if min_team:
         size = profile.get("team_size")
@@ -77,7 +92,7 @@ def check(profile, programme, readiness_results):
     elif unknown:
         verdict, reasons, confirm = UNCLEAR, ["Missing profile facts"], unknown[0]
     else:
-        verdict, reasons, confirm = ELIGIBLE, ["Meets every published requirement listed"], None
+        verdict, reasons, confirm = ELIGIBLE, ["Meets the requirements this app checks"], None
 
     return {"programme": programme, "verdict": verdict, "reasons": reasons,
             "confirm": confirm, "outstanding": outstanding}
