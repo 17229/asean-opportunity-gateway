@@ -115,10 +115,10 @@ in Advanced settings, add the secret `GEMINI_API_KEY = "..."`.
 
 ## Programme data
 
-`data/programmes.json` holds 4 real ASEAN programmes (Malaysia, Southeast
-Asia-wide, Philippines, Thailand). Facts were taken only from what the
-official pages state, as quoted in search results on 31/10/2026, with a link
-to each. Requirements the app cannot check (for example "must be a technology
+`data/programmes.json` holds 3 real ASEAN programmes (Malaysia, Southeast
+Asia-wide, Philippines). Facts come only from the official pages, checked by
+the team on 31/10/2026, with a link to each. A Thailand programme was removed
+because its details could not be confirmed from an official source. Requirements the app cannot check (for example "must be a technology
 start-up") are listed under `not_checked` and shown to the founder. Closed
 application windows are shown as closed. Always confirm on the official page.
 
