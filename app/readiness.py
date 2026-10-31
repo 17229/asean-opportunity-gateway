@@ -56,6 +56,7 @@ CRITERIA = [
 AREAS = ["Market demand", "Feasibility", "Execution"]
 
 EVIDENCED = "Evidence stated"
+NOT_ACHIEVED = "Explicitly not achieved"
 UNVERIFIED = "Quote not found in text"
 FAILS_RULE = "Fails rule"
 MISSING = "Missing"
@@ -72,7 +73,7 @@ MONEY_WORDS = (r"\brm\s?\d|\$|\brp\b|usd|sgd|thb|php|vnd|idr|per month|per year|
 
 
 NEGATION = (r"\b(haven't|have not|hasn't|has not|hadn't|had not|not yet|yet to|don't|do not|"
-            r"doesn't|does not|didn't|did not|never|without|zero|none|nobody|no one|"
+            r"doesn't|does not|didn't|did not|never|without|zero|none|nobody|no one|0 \w+|"
             r"no (customers?|users?|sales|revenue|pilots?|prototype|product|mvp|plan|team|"
             r"interviews?|money|income|date|timeline|milestones?))\b")
 NEGATION_CHECKED = {"demand_evidence", "prototype", "team", "business_model", "next_milestone"}
@@ -105,22 +106,33 @@ def hard_rule(cid, quote):
     return None
 
 
+def _negative(quote, source, text):
+    """A quote in which the founder says this is not done yet."""
+    return bool(quote) and (source == "slide" or _norm(quote) in text) and re.search(NEGATION, _norm(quote))
+
+
 def assess(evidence, submission_text):
-    """evidence: {criterion_id: {"quote": str, "source": "text" | "slide"}}."""
+    """evidence: {criterion_id: {"quote": str, "source": "text" | "slide",
+                                 "negative_quote": str}}."""
     text = _norm(submission_text)
     results = []
     for c in CRITERIA:
         item = evidence.get(c["id"]) or {}
         quote = (item.get("quote") or "").strip()
+        negative = (item.get("negative_quote") or "").strip()
         source = item.get("source") or "text"
         reason = None
-        if not quote:
-            status = MISSING
-        elif source != "slide" and _norm(quote) not in text:
+        if quote and source != "slide" and _norm(quote) not in text:
             status = UNVERIFIED
-        else:
+        elif quote:
             reason = hard_rule(c["id"], quote)
             status = FAILS_RULE if reason else EVIDENCED
+            if reason and _negative(quote, source, text):
+                status, reason = NOT_ACHIEVED, "Founder states this has not been done"
+        else:
+            status = MISSING
+        if status != EVIDENCED and _negative(negative, source, text):
+            status, reason, quote = NOT_ACHIEVED, "Founder states this has not been done", negative
         results.append({**c, "status": status, "quote": quote, "source": source,
                         "source_label": SOURCE_LABEL.get(source, "Unknown"), "reason": reason})
     return results
@@ -151,3 +163,16 @@ def changes(old, new):
     gained = [r for r in new if r["status"] == EVIDENCED and before.get(r["id"]) != EVIDENCED]
     lost = [r for r in new if r["status"] != EVIDENCED and before.get(r["id"]) == EVIDENCED]
     return gained, lost
+
+
+CONTRADICTED = "Contradicted in submission"
+
+
+def apply_conflicts(results, conflicts):
+    """A quote that sits inside a self-contradicting claim never counts as evidence."""
+    claims = [_norm(x) for c in conflicts for x in (c["first"], c["second"])]
+    for r in results:
+        q = _norm(r["quote"])
+        if r["status"] == EVIDENCED and q and any(q in c or c in q for c in claims):
+            r["status"], r["reason"] = CONTRADICTED, "The submission contradicts this claim"
+    return results

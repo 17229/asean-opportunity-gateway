@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from app import anomalies, gemma
 from app.matching import ELIGIBLE, NOT_ELIGIBLE, UNCLEAR, load_programmes, match_all
-from app.readiness import AREAS, CRITERIA, EVIDENCED, area_summary, assess, changes, gaps
+from app.readiness import AREAS, CRITERIA, EVIDENCED, NOT_ACHIEVED, apply_conflicts, area_summary, assess, changes, gaps
 
 load_dotenv()
 try:
@@ -60,7 +60,10 @@ with submit_tab:
                 st.stop()
         results = assess(data.get("evidence", {}), text)
         flags = anomalies.detect(text, data.get("anomalies", []))
+        conflicts = anomalies.contradictions(text, data.get("contradictions", []))
+        results = apply_conflicts(results, conflicts)
         ss.history.append({"text": text, "data": data, "results": results, "anomalies": flags,
+                           "conflicts": conflicts,
                            "when": date.today().isoformat()})
 
     if ss.history:
@@ -81,6 +84,11 @@ with submit_tab:
                        + "\n".join(f"- “{f['text']}” _(flagged by {f['flagged_by']})_" for f in flags))
         else:
             st.caption("Anomalies: none found.")
+        conflicts = run.get("conflicts", [])
+        if conflicts:
+            st.warning("**⚠️ Conflicting claims detected.** The submission contradicts itself. "
+                       "Neither claim is counted as evidence until the founder clarifies.\n\n"
+                       + "\n".join(f"- “{c['first']}” vs “{c['second']}”" for c in conflicts))
 
         st.subheader("What Gemma extracted")
         s = data.get("summary", {})
@@ -100,7 +108,7 @@ with submit_tab:
         for area in AREAS:
             with st.expander(area, expanded=True):
                 for r in [r for r in results if r["area"] == area]:
-                    icon = "✅" if r["status"] == EVIDENCED else "⚠️"
+                    icon = {EVIDENCED: "✅", NOT_ACHIEVED: "⭕"}.get(r["status"], "⚠️")
                     line = f"{icon} **{r['question']}** — {r['status']}"
                     if r["reason"]:
                         line += f": {r['reason']}"
@@ -198,12 +206,15 @@ with track_tab:
 with rubric_tab:
     st.markdown("### How ideas are checked")
     st.markdown("Gemma only **highlights** a quote for each question. Fixed rules give the mark:\n"
-                "1. No quote → **Missing**\n"
-                "2. Quote not word-for-word in the founder's text → **Quote not found in text**\n"
-                "3. Quote fails the hard rule → **Fails rule**, with the reason\n"
-                "4. Otherwise → **Evidence stated** (what the founder says, not verified)\n\n"
+                "1. Nothing relevant → **Missing** (the founder didn't address it)\n"
+                "2. Founder says it isn't done (\"we have not built a prototype\") → "
+                "**Explicitly not achieved**\n"
+                "3. Quote not word-for-word in the founder's text → **Quote not found in text**\n"
+                "4. Quote fails the hard rule → **Fails rule**, with the reason\n"
+                "5. Otherwise → **Evidence stated** (what the founder says, not verified)\n\n"
                 "Asking again never changes a mark. Only new evidence in the text does. "
-                "Instruction-like text in a submission is flagged as an anomaly and never obeyed.")
+                "Instruction-like text in a submission is flagged as an anomaly and never obeyed. "
+                "Self-contradicting claims are flagged as conflicting claims.")
     st.table([{"Area": c["area"], "Question": c["question"], "Counts": c["counts"],
                "Doesn't count": c["not_counts"], "Hard rule": c.get("rule", "—")} for c in CRITERIA])
     st.caption(DISCLAIMER)

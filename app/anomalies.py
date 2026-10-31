@@ -31,3 +31,14 @@ def detect(text, model_flags=()):
         if q and q.lower() not in seen and re.sub(r"\s+", " ", q).lower() in norm:
             found.append({"text": q, "flagged_by": "Gemma"})
     return found
+
+
+def contradictions(text, pairs):
+    """Gemma-proposed contradictions, kept only when both sentences are in the text."""
+    norm = re.sub(r"\s+", " ", text or "").lower()
+    kept = []
+    for p in pairs or []:
+        a, b = (p.get("first") or "").strip(), (p.get("second") or "").strip()
+        if a and b and all(re.sub(r"\s+", " ", x).lower() in norm for x in (a, b)):
+            kept.append({"first": a, "second": b})
+    return kept

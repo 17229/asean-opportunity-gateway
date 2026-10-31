@@ -119,7 +119,7 @@ def test_negations_are_never_evidence():
     ev = {cid: {"quote": bad} for cid in ["demand_evidence", "prototype", "business_model", "next_milestone", "team"]}
     r = {x["id"]: x for x in assess(ev, NEGATIVE)}
     for cid in ev:
-        assert r[cid]["status"] == FAILS_RULE, cid
+        assert r[cid]["status"] == NOT_ACHIEVED, cid
     assert hard_rule("prototype", "We don’t have a prototype yet") is not None
 
 
@@ -143,3 +143,43 @@ def test_real_programme_file_loads():
     progs = load_programmes()
     assert all(p["url"] and p["source"] for p in progs)
     assert not any("SAMPLE" in p["name"] for p in progs)
+
+
+from app.anomalies import contradictions
+from app.readiness import CONTRADICTED, NOT_ACHIEVED, apply_conflicts
+
+TEST9 = ("We are building a soil monitoring app for small durian farms in Pahang. Farmers struggle to "
+         "detect root disease early. We interviewed 0 farmers and have no customer validation. We built "
+         "a working prototype that measures soil moisture. Our team includes one agronomist and two "
+         "software developers. We have not decided how to charge customers. Our next milestone is to "
+         "test the prototype on 5 farms by June 2027.")
+
+
+def test_mixed_evidence_test9():
+    ev = {
+        "problem": {"quote": "Farmers struggle to detect root disease early."},
+        "customer": {"quote": "small durian farms in Pahang"},
+        # Worst case: Gemma offers the zero-interview sentence as demand evidence.
+        "demand_evidence": {"quote": "We interviewed 0 farmers and have no customer validation."},
+        "solution": {"quote": "a soil monitoring app for small durian farms in Pahang"},
+        "prototype": {"quote": "We built a working prototype that measures soil moisture."},
+        "team": {"quote": "Our team includes one agronomist and two software developers."},
+        "business_model": {"quote": None, "negative_quote": "We have not decided how to charge customers."},
+        "next_milestone": {"quote": "Our next milestone is to test the prototype on 5 farms by June 2027."},
+    }
+    r = {x["id"]: x["status"] for x in assess(ev, TEST9)}
+    assert r["demand_evidence"] == NOT_ACHIEVED
+    assert r["business_model"] == NOT_ACHIEVED
+    assert r["risks"] == MISSING
+    s = area_summary(assess(ev, TEST9))
+    assert [s[a]["met"] for a in ["Market demand", "Feasibility", "Execution"]] == [2, 2, 2]
+
+
+def test_contradicted_claim_is_not_evidence():
+    text = "We have 50 paying customers. Actually, that figure was only a projection."
+    pairs = contradictions(text, [{"first": "We have 50 paying customers.",
+                                   "second": "Actually, that figure was only a projection."},
+                                  {"first": "made up", "second": "We have 50 paying customers."}])
+    assert len(pairs) == 1
+    res = apply_conflicts(assess({"demand_evidence": {"quote": "We have 50 paying customers."}}, text), pairs)
+    assert {x["id"]: x["status"] for x in res}["demand_evidence"] == CONTRADICTED
